@@ -31,7 +31,6 @@ public class PatternRecognitionManager : MonoBehaviour
         var scale =  6f / (boundingCoordinates.max - boundingCoordinates.min).x;
         drawnPattern = drawnPattern.Select(v => (v - boundingCoordinates.min) * scale).ToList();
         
-        // Might have to make it so only the values within some range from the best match are added
         var drawnPatternLength = drawnPattern.Count * StepLength * scale;
         
         var possiblePatternList = (from pattern in patterns
@@ -47,11 +46,6 @@ public class PatternRecognitionManager : MonoBehaviour
             select (pattern.likelihood, pattern.pattern)).ToList();
         
         possiblePatternList = tmpPossiblePatternList;
-
-        // foreach (var VARIABLE in possiblePatternList)
-        // {
-        //     Debug.Log(VARIABLE.pattern.name);
-        // }
         
         return (from pattern in possiblePatternList
             let likelihood = EstimateLikelihood_KeyPoints(pattern.pattern, drawnPattern)
