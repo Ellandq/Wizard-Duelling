@@ -14,6 +14,10 @@ public class DrawMousePattern : MonoBehaviour
     private Vector3 _minBounds;
     private Vector3 _maxBounds;
 
+    [Header("Settings")] 
+    [SerializeField] private float startWidth = 0.02f;
+    [SerializeField] private float endWidth = 0.2f;
+
     void Start()
     {
         _lineRenderer = GetComponent<LineRenderer>();
@@ -21,8 +25,8 @@ public class DrawMousePattern : MonoBehaviour
         _mainCamera = Camera.main;
 
         _lineRenderer.positionCount = 0;
-        _lineRenderer.startWidth = 0.05f;
-        _lineRenderer.endWidth = 0.05f;
+        _lineRenderer.startWidth = startWidth;
+        _lineRenderer.endWidth = endWidth;
 
         CreateSquareRenderer();
     }
