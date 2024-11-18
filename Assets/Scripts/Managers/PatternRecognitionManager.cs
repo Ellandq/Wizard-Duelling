@@ -13,7 +13,7 @@ public class PatternRecognitionManager : MonoBehaviour
     [Header("Settings")] 
     [SerializeField] private float minLikelihood = 0.6f;
 
-    private const float Tolerance = 1.05f;
+    private const float Tolerance = 1.2f;
 
     [Header ("Const Values")]
     private const float StepLength = 0.1f;
@@ -33,10 +33,17 @@ public class PatternRecognitionManager : MonoBehaviour
         
         var drawnPatternLength = drawnPattern.Count * StepLength * scale;
         
+        // Debug.Log(drawnPatternLength);
+        
         var possiblePatternList = (from pattern in patterns
             let likelihood = EstimateLikelihood_PatternLength(pattern.totalDistance, drawnPatternLength)
             where !(minLikelihood > likelihood)
             select (likelihood, pattern)).ToList();
+
+        // foreach (var VARIABLE in  possiblePatternList)
+        // {
+        //     Debug.Log(VARIABLE);
+        // }
         
         var tmpPossiblePatternList = (from pattern in possiblePatternList
             let likelihood =
@@ -46,6 +53,11 @@ public class PatternRecognitionManager : MonoBehaviour
             select (pattern.likelihood, pattern.pattern)).ToList();
         
         possiblePatternList = tmpPossiblePatternList;
+        
+        // foreach (var VARIABLE in  possiblePatternList)
+        // {
+        //     Debug.Log(VARIABLE);
+        // }
         
         return (from pattern in possiblePatternList
             let likelihood = EstimateLikelihood_KeyPoints(pattern.pattern, drawnPattern)
@@ -98,6 +110,11 @@ public class PatternRecognitionManager : MonoBehaviour
             
             count -= RemoveSurroundingValues(patternMap, index);
         }
+
+        // foreach (var VARIABLE in indexes)
+        // {
+        //     Debug.Log(VARIABLE);
+        // }
         
         return indexes.Zip(indexes.Skip(1), (a, b) => a < b).All(x => x);
     }
@@ -125,7 +142,7 @@ public class PatternRecognitionManager : MonoBehaviour
             {
                 repeat++;
 
-                if (repeat >= 10)
+                if (repeat >= 25)
                 {
                     return index;
                 }
@@ -149,8 +166,8 @@ public class PatternRecognitionManager : MonoBehaviour
 
     private static int RemoveSurroundingValues(List<(bool blocked, Vector3 position)> pointList, int index)
     {
-        var start = Math.Max(index - 5, 0);
-        var end = Math.Min(index + 5, pointList.Count - 1);
+        var start = Math.Max(index - 8, 0);
+        var end = Math.Min(index + 8, pointList.Count - 1);
         var count = 0;
         
         for (var i = start; i <= end; i++)

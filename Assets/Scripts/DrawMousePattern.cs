@@ -72,7 +72,7 @@ public class DrawMousePattern : MonoBehaviour
         {
             var mousePosition = GetMouseWorldPosition();
 
-            if (_pointsList.Count == 0 || Vector3.Distance(mousePosition, _pointsList[_pointsList.Count - 1]) > 0.1f)
+            if (_pointsList.Count == 0 || Vector3.Distance(mousePosition, _pointsList[_pointsList.Count - 1]) > 0.01f)
             {
                 _pointsList.Add(mousePosition);
                 _fadePoints.Add(mousePosition);
