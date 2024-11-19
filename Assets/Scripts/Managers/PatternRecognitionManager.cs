@@ -121,8 +121,9 @@ public class PatternRecognitionManager : MonoBehaviour
         }
         // Debug.Log($"Pattern Name: {pattern.name}");
         // Debug.Log($"DIFF: {diff}");
+        Debug.Log($"DIFF: {diff}, TOTAL: {pattern.totalDistance}");
         
-        return diff / pattern.selectedPoints.Count <= 2f && indexes.Zip(indexes.Skip(1), (a, b) => a < b).All(x => x);
+        return diff  <= pattern.totalDistance / 2f && indexes.Zip(indexes.Skip(1), (a, b) => a < b).All(x => x);
     }
 
     private static int GetClosestPointIndex(Vector3 target, List<(bool blocked, Vector3 position)> pointList)
