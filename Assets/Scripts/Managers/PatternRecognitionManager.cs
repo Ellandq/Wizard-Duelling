@@ -13,10 +13,11 @@ public class PatternRecognitionManager : MonoBehaviour
     [Header("Settings")] 
     [SerializeField] private float minLikelihood = 0.6f;
 
+    private static float Scale;
     private const float Tolerance = 1.2f;
 
     [Header ("Const Values")]
-    private const float StepLength = 0.1f;
+    private const float StepLength = 0.04f;
 
     public void AddPattern(PatternData newPattern)
     {
@@ -28,10 +29,10 @@ public class PatternRecognitionManager : MonoBehaviour
     
     public PatternData GetClosestPattern(List<Vector3> drawnPattern, (Vector3 min, Vector3 max) boundingCoordinates)
     {
-        var scale =  6f / (boundingCoordinates.max - boundingCoordinates.min).x;
-        drawnPattern = drawnPattern.Select(v => (v - boundingCoordinates.min) * scale).ToList();
+        Scale =  6f / (boundingCoordinates.max - boundingCoordinates.min).x;
+        drawnPattern = drawnPattern.Select(v => (v - boundingCoordinates.min) * Scale).ToList();
         
-        var drawnPatternLength = drawnPattern.Count * StepLength * scale;
+        var drawnPatternLength = drawnPattern.Count * StepLength * Scale;
         
         // Debug.Log(drawnPatternLength);
         
@@ -75,7 +76,7 @@ public class PatternRecognitionManager : MonoBehaviour
         var startDistance = Vector3.Distance(pattern.start, drawnPattern.start);
         var endDistance = Vector3.Distance(pattern.end, drawnPattern.end);
         
-        const float maxDistance = 8.5f;
+        const float maxDistance = 8.5f; // apr = 6√2
         
         var normalizedStart = Mathf.Clamp01(1f - startDistance / maxDistance);
         var normalizedEnd = Mathf.Clamp01(1f - endDistance / maxDistance);
@@ -90,17 +91,11 @@ public class PatternRecognitionManager : MonoBehaviour
             Enumerable.Repeat(false, drawnPattern.Count), 
             (position, blocked) => (blocked, position) 
         ).ToList();
-        var count = drawnPattern.Count;
         
         foreach (var keyPoint in pattern.selectedPoints)
         {
-
-            if (count < 8) 
-            {
-                return false;
-            }
-
             var index = GetClosestPointIndex(AsVector3(keyPoint), patternMap);
+            var previousIndex = indexes.Count == 0 ? 0 : indexes.Last();
             indexes.Add(index);
             
             if (index == -1)
@@ -108,15 +103,26 @@ public class PatternRecognitionManager : MonoBehaviour
                 return false;
             }
             
-            count -= RemoveSurroundingValues(patternMap, index);
+            MarkAsBlocked(patternMap, index, previousIndex);
         }
 
         // foreach (var VARIABLE in indexes)
         // {
         //     Debug.Log(VARIABLE);
         // }
+
+        var diff = 0f;
+        for (var i = 1; i < indexes.Count; i++)
+        {
+            var lineLength = (indexes[i] - indexes[i - 1]) * StepLength * Scale;
+            var patternLineLength = Vector2Int.Distance(pattern.selectedPoints[i - 1], pattern.selectedPoints[i]);
+            // Debug.Log($"DIFF: {Math.Abs(lineLength - patternLineLength)}");
+            diff += Math.Abs(lineLength - patternLineLength);
+        }
+        // Debug.Log($"Pattern Name: {pattern.name}");
+        // Debug.Log($"DIFF: {diff}");
         
-        return indexes.Zip(indexes.Skip(1), (a, b) => a < b).All(x => x);
+        return diff / pattern.selectedPoints.Count <= 2f && indexes.Zip(indexes.Skip(1), (a, b) => a < b).All(x => x);
     }
 
     private static int GetClosestPointIndex(Vector3 target, List<(bool blocked, Vector3 position)> pointList)
@@ -164,13 +170,10 @@ public class PatternRecognitionManager : MonoBehaviour
         return (AsVector3(start), AsVector3(end));
     }
 
-    private static int RemoveSurroundingValues(List<(bool blocked, Vector3 position)> pointList, int index)
+    private static int MarkAsBlocked(List<(bool blocked, Vector3 position)> pointList, int index, int lastIndex)
     {
-        var start = Math.Max(index - 8, 0);
-        var end = Math.Min(index + 8, pointList.Count - 1);
         var count = 0;
-        
-        for (var i = start; i <= end; i++)
+        for (var i = lastIndex + Math.Min(lastIndex, 1); i <= index; i++)
         {
             count++;
             var item = pointList[i];  

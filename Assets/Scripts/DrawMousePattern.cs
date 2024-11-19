@@ -92,6 +92,10 @@ public class DrawMousePattern : MonoBehaviour
         squareRenderer.positionCount = 0;
         _fadeCoroutine = StartCoroutine(FadeOutLine());
         if (!recognizedPattern) return;
+        tempLineRenderer.positionCount = _fullPatternList.Count;
+        tempLineRenderer.SetPositions(_fullPatternList.ToArray());
+        tempLineRenderer.Simplify(0.5f);
+        if (recognizedPattern.selectedPoints.Count != tempLineRenderer.positionCount) return;
         Debug.Log(recognizedPattern.name);
         StartCoroutine(FlashSimplifiedPattern());
 
@@ -188,10 +192,6 @@ public class DrawMousePattern : MonoBehaviour
 
     private IEnumerator FlashSimplifiedPattern()
     {
-        tempLineRenderer.positionCount = _fullPatternList.Count;
-        tempLineRenderer.SetPositions(_fullPatternList.ToArray());
-        tempLineRenderer.Simplify(0.5f);
-
         var simplifiedCount = tempLineRenderer.positionCount;
         var simplifiedPoints = new Vector3[simplifiedCount];
         tempLineRenderer.GetPositions(simplifiedPoints);
