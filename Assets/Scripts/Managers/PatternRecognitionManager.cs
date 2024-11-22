@@ -12,12 +12,11 @@ public class PatternRecognitionManager : MonoBehaviour
     
     [Header("Settings")] 
     [SerializeField] private float minLikelihood = 0.6f;
-
-    private static float Scale;
-    private const float Tolerance = 1.2f;
-
-    [Header ("Const Values")]
-    private const float StepLength = 0.04f;
+    
+    [Header ("Additional Values")]
+    private const float Tolerance = .4f;
+    private static float _scale;
+    private static float _drawnPatternLength;
 
     public void AddPattern(PatternData newPattern)
     {
@@ -29,22 +28,16 @@ public class PatternRecognitionManager : MonoBehaviour
     
     public PatternData GetClosestPattern(List<Vector3> drawnPattern, (Vector3 min, Vector3 max) boundingCoordinates)
     {
-        Scale =  6f / (boundingCoordinates.max - boundingCoordinates.min).x;
-        drawnPattern = drawnPattern.Select(v => (v - boundingCoordinates.min) * Scale).ToList();
+        _scale =  6f / (boundingCoordinates.max - boundingCoordinates.min).x;
+        drawnPattern = drawnPattern.Select(v => (v - boundingCoordinates.min) * _scale).ToList();
         
-        var drawnPatternLength = drawnPattern.Count * StepLength * Scale;
-        
-        // Debug.Log(drawnPatternLength);
+        _drawnPatternLength = CalculateLineLength(drawnPattern);
+        Debug.Log(_drawnPatternLength);
         
         var possiblePatternList = (from pattern in patterns
-            let likelihood = EstimateLikelihood_PatternLength(pattern.totalDistance, drawnPatternLength)
+            let likelihood = EstimateLikelihood_PatternLength(pattern.totalDistance)
             where !(minLikelihood > likelihood)
             select (likelihood, pattern)).ToList();
-
-        // foreach (var VARIABLE in  possiblePatternList)
-        // {
-        //     Debug.Log(VARIABLE);
-        // }
         
         var tmpPossiblePatternList = (from pattern in possiblePatternList
             let likelihood =
@@ -55,20 +48,18 @@ public class PatternRecognitionManager : MonoBehaviour
         
         possiblePatternList = tmpPossiblePatternList;
         
-        // foreach (var VARIABLE in  possiblePatternList)
-        // {
-        //     Debug.Log(VARIABLE);
-        // }
-        
         return (from pattern in possiblePatternList
             let likelihood = EstimateLikelihood_KeyPoints(pattern.pattern, drawnPattern)
             where likelihood
             select pattern.pattern).FirstOrDefault();
     }
 
-    private static float EstimateLikelihood_PatternLength(float patternLength, float drawnPatternLength)
+    private static float EstimateLikelihood_PatternLength(float patternLength)
     {
-        return drawnPatternLength > patternLength * Tolerance ? 0f : Mathf.Clamp01(drawnPatternLength / patternLength);
+        var maxDifference = patternLength * Tolerance;
+        return Mathf.Abs(_drawnPatternLength - patternLength) <= maxDifference
+            ? Mathf.Clamp01(1f - Mathf.Abs(_drawnPatternLength - patternLength) / maxDifference)
+            : 0f;
     }
     
     private static float EstimateLikelihood_StartAndEndPoints((Vector3 start, Vector3 end) pattern, (Vector3 start, Vector3 end) drawnPattern)
@@ -106,22 +97,13 @@ public class PatternRecognitionManager : MonoBehaviour
             MarkAsBlocked(patternMap, index, previousIndex);
         }
 
-        // foreach (var VARIABLE in indexes)
-        // {
-        //     Debug.Log(VARIABLE);
-        // }
-
         var diff = 0f;
         for (var i = 1; i < indexes.Count; i++)
         {
-            var lineLength = (indexes[i] - indexes[i - 1]) * StepLength * Scale;
+            var lineLength = _drawnPatternLength * (indexes[i] - indexes[i - 1]) / drawnPattern.Count;
             var patternLineLength = Vector2Int.Distance(pattern.selectedPoints[i - 1], pattern.selectedPoints[i]);
-            // Debug.Log($"DIFF: {Math.Abs(lineLength - patternLineLength)}");
             diff += Math.Abs(lineLength - patternLineLength);
         }
-        // Debug.Log($"Pattern Name: {pattern.name}");
-        // Debug.Log($"DIFF: {diff}");
-        Debug.Log($"DIFF: {diff}, TOTAL: {pattern.totalDistance}");
         
         return diff  <= pattern.totalDistance / 2f && indexes.Zip(indexes.Skip(1), (a, b) => a < b).All(x => x);
     }
@@ -157,6 +139,24 @@ public class PatternRecognitionManager : MonoBehaviour
         }
         
         return index;
+    }
+    
+    private static float CalculateLineLength(List<Vector3> points)
+    {
+        var length = 0f;
+        var positionCount = points.Count;
+
+        if (positionCount < 2)
+            return 0f; 
+
+        for (var i = 0; i < positionCount - 1; i++)
+        {
+            var start = points[i];
+            var end = points[i + 1];
+            length += Vector3.Distance(start, end);
+        }
+
+        return length;
     }
     
     private static bool IsOnEdge(Vector3 point)

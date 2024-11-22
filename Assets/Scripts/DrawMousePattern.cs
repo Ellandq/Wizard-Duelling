@@ -29,6 +29,7 @@ public class DrawMousePattern : MonoBehaviour
 
     private Coroutine _fadeCoroutine;
     private bool _isDrawing;
+    private bool _patternFound;
 
     void Start()
     {
@@ -88,18 +89,19 @@ public class DrawMousePattern : MonoBehaviour
         if (!Input.GetMouseButtonUp(0)) return;
         _isDrawing = false;
         _fullPatternList = new List<Vector3>(_pointsList);
-        var recognizedPattern = patternRecognition.GetClosestPattern(_pointsList, (_minBounds, _maxBounds));
         squareRenderer.positionCount = 0;
         _fadeCoroutine = StartCoroutine(FadeOutLine());
+        var recognizedPattern = patternRecognition.GetClosestPattern(_pointsList, (_minBounds, _maxBounds));
+        
         if (!recognizedPattern) return;
         tempLineRenderer.positionCount = _fullPatternList.Count;
         tempLineRenderer.SetPositions(_fullPatternList.ToArray());
         tempLineRenderer.Simplify(0.5f);
+        
         if (recognizedPattern.selectedPoints.Count != tempLineRenderer.positionCount) return;
         Debug.Log(recognizedPattern.name);
+        _patternFound = true;
         StartCoroutine(FlashSimplifiedPattern());
-
-        
     }
 
     private Vector3 GetMouseWorldPosition()
@@ -153,26 +155,32 @@ public class DrawMousePattern : MonoBehaviour
 
     private IEnumerator FadeOutLine()
     {
-        var totalFadeTime = fadeOutSpeed;
-        var elapsedTime = 0f;
-
-        while (_fadePoints.Count > 0 && elapsedTime < totalFadeTime)
+        while (_fadePoints.Count > 0)
         {
-            elapsedTime += Time.deltaTime;
+            if (_patternFound)
+            {
+                _fadePoints.Clear();
+                _lineRenderer.positionCount = 0;
+                _patternFound = false;
+                yield break; 
+            }
+            
+            var timePerPoint = fadeOutSpeed / _fadePoints.Count;
 
-            var normalizedTime = elapsedTime / totalFadeTime;
-            var pointsToRemove = Mathf.FloorToInt(normalizedTime * _fadePoints.Count);
-
-            _fadePoints = _fadePoints.Skip(pointsToRemove).ToList();
-
+            _fadePoints.RemoveAt(0);
+            
             _lineRenderer.positionCount = _fadePoints.Count;
-            _lineRenderer.SetPositions(_fadePoints.ToArray());
+            if (_fadePoints.Count > 0)
+            {
+                _lineRenderer.SetPositions(_fadePoints.ToArray());
+            }
 
-            yield return null;
+            yield return new WaitForSeconds(timePerPoint);
         }
 
         _lineRenderer.positionCount = 0;
     }
+
 
     private IEnumerator FadeOutWhileDrawing()
     {

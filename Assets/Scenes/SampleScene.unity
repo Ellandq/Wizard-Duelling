@@ -897,9 +897,9 @@ MonoBehaviour:
   tempLineRenderer: {fileID: 1285494387}
   startWidth: 0.05
   endWidth: 0.2
-  fadeOutSpeed: 1
+  fadeOutSpeed: 0.05
   drawFadeOutSpeed: 0.3
-  flashDuration: 0.4
+  flashDuration: 0.3
 --- !u!120 &1096813416
 LineRenderer:
   m_ObjectHideFlags: 0
