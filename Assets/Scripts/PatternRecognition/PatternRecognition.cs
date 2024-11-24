@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.Serialization;
 using static Vector2IntExtensions;
 
-public class PatternRecognitionManager : MonoBehaviour
+public class PatternRecognition : MonoBehaviour
 {
     public List<PatternData> patterns = new List<PatternData>();
     

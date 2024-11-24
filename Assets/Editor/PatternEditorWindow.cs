@@ -125,7 +125,7 @@ public class PatternEditorWindow : EditorWindow
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
 
-        var manager = FindObjectOfType<PatternRecognitionManager>();
+        var manager = FindObjectOfType<PatternRecognition>();
         if (manager)
         {
             manager.AddPattern(patternData);

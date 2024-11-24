@@ -7,7 +7,7 @@ using static Vector2IntExtensions;
 
 public class DrawMousePattern : MonoBehaviour
 {
-    [SerializeField] private PatternRecognitionManager patternRecognition;
+    [SerializeField] private PatternRecognition patternRecognition;
     [SerializeField] private LineRenderer squareRenderer;
     [SerializeField] private LineRenderer recognizedPatternRenderer;
     [SerializeField] private LineRenderer tempLineRenderer;
